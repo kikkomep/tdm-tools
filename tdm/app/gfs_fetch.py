@@ -22,16 +22,21 @@ import shutil
 import logging
 import argparse
 from datetime import datetime
-from tdm.gfs.noaa import noaa_fetcher
+from tdm.gfs.noaa import ftp_noaa_fetcher, http_noaa_fetcher
 
 NOW = datetime.now()
 
 LOGGER = logging.getLogger('tdm.app.gfs_fetch')
 
+SUPPORTED_PROTOCOLS = ["ftp", "http"]
+
 
 def main(args):
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
-    nf = noaa_fetcher(args.year, args.month, args.day, args.hour)
+    fetcher_class = ftp_noaa_fetcher \
+        if args.protocol == SUPPORTED_PROTOCOLS[0] \
+        else http_noaa_fetcher
+    nf = fetcher_class(args.year, args.month, args.day, args.hour)
     if os.path.exists(args.target_directory):
         LOGGER.debug("Target folder '%s' already exists",
                      args.target_directory)
@@ -94,6 +99,11 @@ def add_parser(subparsers):
         '--requested-resolution', metavar='RESOLUTION',
         type=str, default='0p50',
         help="Requested resolution in fraction of degree. Defaults to '0p50'"
+    )
+    parser.add_argument(
+        '--protocol', metavar='protocol',
+        type=str, default=SUPPORTED_PROTOCOLS[0], choices=SUPPORTED_PROTOCOLS,
+        help="Protocol {} to download data. Defaults to '{}'".format(SUPPORTED_PROTOCOLS, SUPPORTED_PROTOCOLS[0])
     )
     parser.add_argument(
         '--overwrite', action='store_true', default=False,
