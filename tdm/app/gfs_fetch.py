@@ -42,7 +42,7 @@ def main(args):
             LOGGER.error("Target folder already exists. "
                          "Use '--overwrite' option to enable overwrite.")
             sys.exit(99)
-    os.mkdir(args.target_directory)
+    os.makedirs(args.target_directory)
     nf.fetch(args.requested_resolution, args.target_directory,
              nthreads=args.n_download_threads)
     with open(args.semaphore_file, "w") as f:
