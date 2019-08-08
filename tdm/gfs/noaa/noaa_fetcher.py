@@ -142,3 +142,62 @@ class ftp_noaa_fetcher(noaa_fetcher):
                     dt.total_seconds(), fname)
         return target
 
+
+class http_noaa_fetcher(noaa_fetcher):
+    A = "a"
+    HREF = 'href'
+    NOAA_SERVER = "http://www.ftp.ncep.noaa.gov"
+    NOAA_BASE_PATH = "data/nccf/com/gfs/prod"
+
+    def __init__(self, year, month, day, hour):
+        noaa_fetcher.__init__(self, year, month, day, hour)
+        self._session = None
+
+    @property
+    def session(self):
+        if not self._session:
+            self._session = requests.Session()
+        return self._session
+
+    @classmethod
+    def to_bytes(cls, d):
+        power = {"K": 1, "M": 2, "G": 3, "T": 4, "P": 5}
+        r = re.search('(\d+)([KGMTP])', d)
+        return int(r.group(1)) * pow(1024, power[r.group(2)]) if r else int(d) if r else 0
+
+    @classmethod
+    def list_files_in_path(cls, path):
+        entries = {}
+        url = os.path.join(cls.NOAA_SERVER, path)
+        LOGGER.debug("Listing files in path %s", url)
+        r = HTMLSession().get(url)
+        if r.status_code == 200:
+            LOGGER.debug(r.html.absolute_links)
+            for a in r.html.find("a"):
+                m = re.search("<a.*>([\w\.-/]+)</a>\s*([\w-]+)\s*([\d:]+)\s*([\dKMGTP-]+)", str(a.raw_html))
+                if m:
+                    name = m.group(1)[:-1] if m.group(1).endswith('/') else m.group(1)
+                    entries[name] = {'name': name,
+                                     'size': cls.to_bytes(m.group(4))}
+        else:
+            LOGGER.error("Unable to list path '%s' (error %r)", url, r.status_code)
+        return entries
+
+    @classmethod
+    def list_available_dataset_groups(cls):
+        return cls.list_files_in_path(cls.NOAA_BASE_PATH)
+
+    def fetch_file(self, ds_path, fname, tdir):
+        LOGGER.info('Fetching %s/%s into %s', self.ds, fname, tdir)
+        begin = datetime.datetime.now()
+        target = os.path.join(tdir, fname)
+        url = os.path.join(self.NOAA_SERVER, ds_path, fname)
+        r = self.session.get(url, allow_redirects=True)
+        if r.status_code == 200:
+            open(target, 'wb').write(r.content)
+            dt = datetime.datetime.now() - begin
+            LOGGER.info('It took %s secs to fetch %s',
+                        dt.total_seconds(), fname)
+        else:
+            LOGGER.error("Unable to download file '%s' (error %r)", url, r.status_code)
+        return target
