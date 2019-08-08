@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .noaa_fetcher import noaa_fetcher as noaa_fetcher
+from .noaa_fetcher import ftp_noaa_fetcher as ftp_noaa_fetcher
+from .noaa_fetcher import http_noaa_fetcher as http_noaa_fetcher
 
-__all__ = ["noaa_fetcher"]
+__all__ = ["ftp_noaa_fetcher", "http_noaa_fetcher"]

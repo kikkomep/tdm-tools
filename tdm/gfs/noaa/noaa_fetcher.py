@@ -12,13 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime
+# SITE: https://www.emc.ncep.noaa.gov/GFS/impl.php
+
 import os
+import re
 import time
+import logging
+import datetime
+import requests
+from math import pow
 from ftplib import FTP
 from concurrent import futures
-import logging
 from abc import ABC, abstractmethod
+from requests_html import HTMLSession
 
 LOGGER = logging.getLogger('tdm.gfs.noaa')
 
