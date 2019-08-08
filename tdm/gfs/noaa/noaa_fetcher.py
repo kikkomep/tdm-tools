@@ -168,8 +168,9 @@ class http_noaa_fetcher(noaa_fetcher):
     @classmethod
     def to_bytes(cls, d):
         power = {"K": 1, "M": 2, "G": 3, "T": 4, "P": 5}
-        r = re.search('(\d+)([KGMTP])', d)
-        return int(r.group(1)) * pow(1024, power[r.group(2)]) if r else int(d) if r else 0
+        r = re.search(r'(\d+)([KGMTP])', d)
+        return int(r.group(1)) * pow(1024, power[r.group(2)]) \
+            if r else int(d) if r else 0
 
     @classmethod
     def list_files_in_path(cls, path):
@@ -180,13 +181,17 @@ class http_noaa_fetcher(noaa_fetcher):
         if r.status_code == 200:
             LOGGER.debug(r.html.absolute_links)
             for a in r.html.find("a"):
-                m = re.search("<a.*>([\w\.-/]+)</a>\s*([\w-]+)\s*([\d:]+)\s*([\dKMGTP-]+)", str(a.raw_html))
+                m = re.search(r"<a.*>([\w\.-/]+)</a>\s*"
+                              r"([\w-]+)\s*([\d:]+)\s*([\dKMGTP-]+)",
+                              str(a.raw_html))
                 if m:
-                    name = m.group(1)[:-1] if m.group(1).endswith('/') else m.group(1)
+                    name = m.group(1)[:-1] \
+                           if m.group(1).endswith('/') else m.group(1)
                     entries[name] = {'name': name,
                                      'size': cls.to_bytes(m.group(4))}
         else:
-            LOGGER.error("Unable to list path '%s' (error %r)", url, r.status_code)
+            LOGGER.error("Unable to list path '%s' (error %r)",
+                         url, r.status_code)
         return entries
 
     @classmethod
@@ -205,5 +210,6 @@ class http_noaa_fetcher(noaa_fetcher):
             LOGGER.info('It took %s secs to fetch %s',
                         dt.total_seconds(), fname)
         else:
-            LOGGER.error("Unable to download file '%s' (error %r)", url, r.status_code)
+            LOGGER.error("Unable to download file '%s' (error %r)",
+                         url, r.status_code)
         return target

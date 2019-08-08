@@ -103,7 +103,9 @@ def add_parser(subparsers):
     parser.add_argument(
         '--protocol', metavar='protocol',
         type=str, default=SUPPORTED_PROTOCOLS[0], choices=SUPPORTED_PROTOCOLS,
-        help="Protocol {} to download data. Defaults to '{}'".format(SUPPORTED_PROTOCOLS, SUPPORTED_PROTOCOLS[0])
+        help="Protocol {} to download data. "
+             "Defaults to '{}'".format(SUPPORTED_PROTOCOLS,
+                                       SUPPORTED_PROTOCOLS[0])
     )
     parser.add_argument(
         '--overwrite', action='store_true', default=False,
