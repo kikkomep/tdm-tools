@@ -18,34 +18,14 @@ import time
 from ftplib import FTP
 from concurrent import futures
 import logging
+from abc import ABC, abstractmethod
 
 LOGGER = logging.getLogger('tdm.gfs.noaa')
 
 
-class noaa_fetcher(object):
-    NOAA_FTP_SERVER = 'ftp.ncep.noaa.gov'
-    NOAA_BASE_PATH = '/pub/data/nccf/com/gfs/prod/'
+class noaa_fetcher(ABC):
     NOAA_DATASET_FOLDER_SIZE = 196608
     FETCH_ATTEMPTS = 3
-
-    @classmethod
-    def list_files_in_path(cls, path):
-        entries = {}
-
-        def add_clean_entry(x):
-            size, name = [x.split()[i] for i in (4, 8)]
-            entries[name] = {'size': int(size), 'name': name}
-
-        with FTP(cls.NOAA_FTP_SERVER) as ftp:
-            ftp.login()
-            ftp.cwd(path)
-            ftp.retrlines('LIST', callback=add_clean_entry)
-
-        return entries
-
-    @classmethod
-    def list_available_dataset_groups(cls):
-        return cls.list_files_in_path(cls.NOAA_BASE_PATH)
 
     def __init__(self, year, month, day, hour):
         self.date = datetime.datetime(year, month, day, hour, 0)
@@ -54,24 +34,24 @@ class noaa_fetcher(object):
 
     def is_dataset_ready(self):
         available_groups = self.list_available_dataset_groups()
+        LOGGER.debug("Available groups: %r", available_groups)
         return (self.ds in available_groups and
                 available_groups[self.ds]['size']
                 <= self.NOAA_DATASET_FOLDER_SIZE)
 
+    @classmethod
+    @abstractmethod
+    def list_files_in_path(cls, path):
+        pass
+
+    @classmethod
+    @abstractmethod
+    def list_available_dataset_groups(cls):
+        pass
+
+    @abstractmethod
     def fetch_file(self, ds_path, fname, tdir):
-        LOGGER.info('Fetching %s/%s into %s', self.ds, fname, tdir)
-        begin = datetime.datetime.now()
-        target = os.path.join(tdir, fname)
-        with FTP(self.NOAA_FTP_SERVER) as ftp:
-            ftp.login()
-            ftp.cwd(ds_path)
-            cmd = 'RETR %s' % fname
-            ftp.retrbinary(cmd, open(target, 'wb').write,
-                           blocksize=1024 * 1024)
-        dt = datetime.datetime.now() - begin
-        LOGGER.info('It took %s secs to fetch %s',
-                    dt.total_seconds(), fname)
-        return target
+        pass
 
     def fetch(self, res, tdir, pattern='gfs.t%Hz.pgrb2',
               nthreads=4, tsleep=300):
