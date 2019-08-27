@@ -13,7 +13,9 @@ RUN pip install --no-cache-dir \
         netCDF4 \
         pyyaml \
         scipy \
-        xarray
+        xarray \
+        requests \
+        requests-html
 
 COPY . /build/tdm-tools
 WORKDIR /build/tdm-tools
