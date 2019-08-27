@@ -18,17 +18,19 @@ Prepare WRF configuration files
 
 import argparse
 import yaml
+import logging
 from tdm.wrf import configurator
 from tdm.wrf import summarizer
 from tdm.wrf import configuration_checker
 from tdm import __version__ as version
-
 
 from datetime import datetime
 
 NOW = datetime.now()
 
 SUPPORTED_TARGETS = ['WPS', 'WRF']
+
+LOGGER = logging.getLogger('tdm.app.gfs_fetch')
 
 
 def is_int(s):
@@ -88,6 +90,7 @@ def generate_header(target):
 
 
 def write_wps(config, ostream):
+    LOGGER.debug(generate_header('WPS'))
     ostream.write(generate_header('WPS'))
     ostream.write(config.generate_share())
     ostream.write(config.generate_geogrid())
@@ -108,7 +111,10 @@ def write_wrf(config, ostream):
 
 
 def main(args):
-    config = configurator.make(yaml.load(args.config.read()))
+    logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
+    config = configurator.make(yaml.load(args.config.read(), Loader=yaml.FullLoader))
+    LOGGER.debug("Configuration: %r", config)
+    LOGGER.debug("D args: %r", args.D)
     if args.D:
         config.update(args.D)
     checker = configuration_checker(config)
@@ -128,10 +134,15 @@ def main(args):
             print('{}'.format(config[k]))
         exit(0)
 
-    if args.target == 'WPS':
-        write_wps(config, args.ofile)
-    elif args.target == 'WRF':
-        write_wrf(config, args.ofile)
+    try:
+        if args.target == 'WPS':
+            LOGGER.debug("Enable target WPS")
+            write_wps(config, args.ofile)
+        elif args.target == 'WRF':
+            LOGGER.debug("Enable target WPR")
+            write_wrf(config, args.ofile)
+    except Exception as e:
+        LOGGER.exception(e)
 
 
 def add_parser(subparsers):
@@ -152,4 +163,8 @@ def add_parser(subparsers):
                         help='Add/update configuration item.')
     parser.add_argument('-P', '--print', metavar='K', action='append',
                         help='Print configuration value for key K.')
+    parser.add_argument(
+        '--debug', action='store_true', default=False,
+        help="Enable debug messages. Defaults to 'False'"
+    )
     parser.set_defaults(func=main)
