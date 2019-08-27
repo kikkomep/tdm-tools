@@ -44,9 +44,9 @@ def main(args):
             shutil.rmtree(args.target_directory, ignore_errors=True)
             LOGGER.info("Cleaned target folder '%s'.", args.target_directory)
         else:
-            LOGGER.error("Target folder already exists. "
-                         "Use '--overwrite' option to enable overwrite.")
-            sys.exit(99)
+            LOGGER.info("Target folder already exists. "
+                         "Use '--overwrite' force the download.")
+            sys.exit(0)
     os.makedirs(args.target_directory)
     nf.fetch(args.requested_resolution, args.target_directory,
              nthreads=args.n_download_threads)
