@@ -112,7 +112,8 @@ def write_wrf(config, ostream):
 
 def main(args):
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
-    config = configurator.make(yaml.load(args.config.read(), Loader=yaml.FullLoader))
+    config = configurator.make(yaml.load(args.config.read(),
+                                         Loader=yaml.FullLoader))
     LOGGER.debug("Configuration: %r", config)
     LOGGER.debug("D args: %r", args.D)
     if args.D:

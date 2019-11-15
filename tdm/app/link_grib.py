@@ -30,7 +30,8 @@ def link_grib(src_dir, dst_dir):
                  for k in string.ascii_uppercase]
     assert len(dst_paths) >= len(files)
     for f, t in zip(files, dst_paths):
-        os.symlink(f, os.path.join(dst_dir, t))
+        if not os.path.exists(os.path.join(dst_dir, t)):
+            os.symlink(f, os.path.join(dst_dir, t))
 
 
 def main(args):

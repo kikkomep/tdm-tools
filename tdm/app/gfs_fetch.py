@@ -45,8 +45,8 @@ def main(args):
             LOGGER.info("Cleaned target folder '%s'.", args.target_directory)
         else:
             LOGGER.info("Target folder already exists. "
-                         "Use '--overwrite' force the download.")
-            sys.exit(0)
+                        "Use '--overwrite' force the download.")
+            sys.exit(os.EX_OK)
     os.makedirs(args.target_directory)
     nf.fetch(args.requested_resolution, args.target_directory,
              nthreads=args.n_download_threads)
